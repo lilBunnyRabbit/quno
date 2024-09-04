@@ -26,3 +26,4 @@ go.work.sum
 
 # Other
 tmp/
+*.db

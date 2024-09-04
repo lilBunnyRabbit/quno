@@ -15,11 +15,14 @@ type Note struct {
 	Path      string
 }
 
-func (note *Note) ToString() string {
+func (note Note) String() string {
+	dashes := strings.Repeat("-", max(len(note.Title), 32))
+
 	return fmt.Sprintf(
-		"%s\n%s\n%s",
+		"\n%s\n%s\n%s\n\n%s",
+		dashes,
 		color.CyanString(note.Title),
-		strings.Repeat("-", len(note.Title)),
+		dashes,
 		note.Content,
 	)
 }

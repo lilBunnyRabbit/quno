@@ -51,7 +51,7 @@ to quickly create a Cobra application.`,
 
 		note := notes.GetNote(list[i])
 
-		fmt.Println(note.ToString())
+		fmt.Println(note)
 	},
 }
 
