@@ -1,12 +1,12 @@
 ---
 name: start
-description: Pick up a quest from the quno vault in this session — read it, ask the user whatever is still unclear until the idea is solid, ask whether to implement or investigate, record this session id on the quest, set it in-progress, do the work, write findings. Use when the user says /quno:start <id or slug>, "start quest X", "pick up X", or when spawned by `quno start`. No argument lists the quests that are ready.
+description: Pick up a quest from the quno vault in this session — read it, ask the user whatever is still unclear until the idea is solid, ask the route (implement, investigate, record an ADR, brief only, drop), record this session id, do the work inside the same quest file, write findings. Works at any phase: raw, ready, investigating, adr, in-progress. Use when the user says /quno:start <id or slug>, "start quest X", "pick up X", "continue the investigation on X", or when spawned by `quno start`. No argument lists the quests that are ready.
 argument-hint: <quest id, slug or title fragment>
 ---
 
 # quno:start
 
-Adopt a quest in this session. The quest file is the ticket. Before any work the idea has to be solid enough that the user and you mean the same thing, and the user has to pick the route.
+Adopt a quest in this session. The quest file is the ticket and the record: investigation, decision and findings all go into it. Before any work the idea has to be solid and the user has to pick the route.
 
 ## Resolve
 
@@ -15,21 +15,23 @@ Adopt a quest in this session. The quest file is the ticket. Before any work the
 
 ## Steps
 
-1. **Find.** `$ARGUMENTS` empty → list quests with `status: ready` or `in-progress` (id, title, project, created), stop. Else match `id:` exactly or by unique prefix, then `<docs>/quests/<slug>.md` exactly, then by filename or `# title` substring. Several → list them, stop. None → say so, stop.
+1. **Find.** `$ARGUMENTS` empty → list quests not `done` or `dropped` (id, status, title, project), stop. Else match `id:` exactly or by unique prefix, then `<docs>/quests/<slug>.md` exactly, then by filename or `# title` substring. Several → list them, stop. None → say so, stop.
 2. **Raw?** `status: raw` → apply the `/quno:parse` steps to this one quest first (brief, retitle, rename), continue with the new path.
-3. **cwd.** `repo` set and cwd not inside it → stop; tell the user to `cd <repo>` and rerun, or use `quno start <id>`. Project context (CLAUDE.md, memory, relative paths) is cwd-based; never work from the wrong directory.
-4. **Understand.** Read `## Idea`, `## Brief`, any `## Findings`, and open the Brief's entry points in the repo. Then restate the quest in three lines: what changes, where, done-when. Everything that is still open after reading the repo goes into one AskUserQuestion, batched, each question with concrete options plus the free-text fallback: which surface or flow, scope edges, behaviour on the edge cases you found, what done looks like, contradictions between Idea and Brief, anything the Idea assumes that the code does not support. Do not ask what the repo answers; do not ask if the Brief already answers it. Repeat once if the answers open new gaps. Write the outcome into the quest under `## Brief` as a `**Clarified <YYYY-MM-DD>:**` block (decisions, edge cases, done-when as agreed); fix scope or entry points in the Brief if they were wrong. Never touch `## Idea`.
-5. **Route.** Ask, one AskUserQuestion, options in this order: Implement now · Investigate first (research, `/quno:investigation`, `/quno:adr` if a decision falls out, then decide again) · Brief only (stop here, quest stays `ready`) · Drop (`status: dropped`, one line why under Findings). A Brief that opens with `Investigate first:` puts that option first and says why. In-progress quests being resumed skip this step unless the Findings say the route was undecided.
-6. **Claim.** Only for Implement or Investigate: `echo $CLAUDE_CODE_SESSION_ID` → `session:`; `status: in-progress`. Say in one line what you are about to do, then go.
-7. **Work.**
-   - Implement: do it. Repo rules (CLAUDE.md, style) apply. No commit unless the user asks.
-   - Investigate: research, then `/quno:investigation` to archive it; a decision → `/quno:adr`. Both find this quest through its `session:` and link both ways. When the investigation lands, ask Implement now or Brief only, and continue.
-8. **Findings.** Append or extend `## Findings`: outcome, PR or branch, decisions, links. Finished → `status: done`. Stopping mid-way → Findings holds the state so far and the exact next step; status stays `in-progress`.
-9. **Report** one line: quest id, status, what landed.
+3. **cwd.** `repo` set and cwd not inside it → stop; tell the user to `cd <repo>` and rerun, or use `quno start <id>`. Project context is cwd-based; never work from the wrong directory.
+4. **Understand.** Read every section present and open the Brief's entry points in the repo. Restate the quest in three lines: what changes, where, done-when; for `investigating` or `adr` quests, the bottom line so far and what is still open. Everything the repo did not answer goes into one AskUserQuestion, batched, concrete options plus free text: which surface or flow, scope edges, behaviour on the edge cases you found, done-when, contradictions between sections. Do not ask what the repo or the Brief answers. Repeat once if answers open new gaps. Write the outcome under `## Brief` as a `**Clarified <YYYY-MM-DD>:**` block; fix scope or entry points if they were wrong. Never touch `## Idea`. If the restatement needed no questions, say so and move on.
+5. **Route.** One AskUserQuestion, options fitted to the phase and in this order: Implement now · Investigate (or continue investigating) · Record ADR (when an investigation exists and the decision is clear) · Brief only (stop, status unchanged) · Drop (`status: dropped`, one line why under Findings). A Brief opening with `Investigate first:` puts Investigate first and says why. An `in-progress` quest being resumed skips this unless Findings say the route is undecided.
+6. **Claim.** For Implement, Investigate, Record ADR: `echo $CLAUDE_CODE_SESSION_ID` → `session:`. Status: `in-progress`, `investigating`, or `adr` when the ADR is written. Say in one line what you are about to do, then go.
+7. **Work**, inside the quest file, sections per Conventions:
+   - Investigate: research, then write or extend `## Investigation`: the question, evidence per claim (`path:line`, command, the override that beat a first guess), options, `### Bottom line`. Extending → dated `_<date>:_` lines, untouched parts stay. Then ask: Record ADR · Implement now · Stop here.
+   - Record ADR: write `## ADR`: context, drivers, at least two options with pros and cons, chosen and why the losers lost, consequences. Supersedes another quest's decision → `Supersedes [[slug]]` here, `Superseded by [[this-slug]]` and `status: done` there. Status `adr`. Then ask: Implement now · Stop here.
+   - Implement: status `in-progress`, do it. Repo rules (CLAUDE.md, style) apply. No commit unless the user asks.
+8. **Findings.** Append or extend `## Findings`: outcome, PR or branch, next step if stopping mid-way (status then stays where it is). Finished → `status: done`.
+9. **Report** one line: id, status, what landed.
 
 ## Rules
 
-- Questions before work. Solid means the user could hand the quest to someone else and get the same result; if the restatement in step 4 needed no questions, say so and move to the route.
+- Questions before work. Solid means the user could hand the quest to someone else and get the same result.
 - Never rewrite `## Idea`. A wrong Brief may be corrected; note the correction under Clarified.
+- Evidence over assertion in Investigation and ADR; tables over prose for comparisons; never invent a `path:line`.
 - Wikilinks only to files verified in `<docs>`.
 - A lesson that generalizes beyond this repo goes through `/learn`, not into Findings.

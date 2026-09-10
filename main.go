@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const usageText = `quno — quests, todo, and the agent that works them
+const usageText = `quno — quests (idea, investigation, ADR, implementation in one file), todo, and the agent that works them
 
   quno q <text>              new raw quest; project from cwd, repo and branch recorded
   quno q -                   same, text from stdin
@@ -16,6 +16,7 @@ const usageText = `quno — quests, todo, and the agent that works them
   quno t clear [--all]       delete checked todos; --all deletes every todo
   quno ls [-a | -s <status>] [-l] [--porcelain]
                              quests with ids; hides done and dropped, -l adds the slug line
+                             status: raw ready investigating adr in-progress done dropped
   quno start [<quest>]       cd repo, claude "/quno:start <slug>"; no quest lists ready ones
   quno resume <quest>        cd repo, claude --resume <recorded session>
   quno drop <quest>          set status: dropped

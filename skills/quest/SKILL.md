@@ -1,12 +1,12 @@
 ---
 name: quest
-description: Capture an idea as a quest in the quno vault from inside a session — distill a title, resolve project and repo from cwd, dedupe against existing quests and investigations, write a brief against the real repo, file it as status ready. Use when the user says /quno:quest, "quest this", "make this a quest", or wants an idea saved for later work. With no arguments, capture the idea currently under discussion.
-argument-hint: <idea text, or empty to capture the idea under discussion>
+description: File the thing under discussion as a quest in the quno vault at whatever stage it is — a fresh idea gets a title and a Brief (status ready); an investigation or decision already worked out in this conversation gets Investigation / ADR sections (status investigating or adr). Dedupes against existing quests. Use when the user says /quno:quest, "quest this", "archive this analysis", "record this decision", or wants something saved for later.
+argument-hint: <idea text, or empty to file what is under discussion>
 ---
 
 # quno:quest
 
-Capture one idea as a quest file. The user pays one line; you write the title and the Brief.
+One quest file per thing. The user pays one line; you write the rest.
 
 ## Resolve
 
@@ -17,30 +17,20 @@ Capture one idea as a quest file. The user pays one line; you write the title an
 
 ## Steps
 
-1. **Idea.** `$ARGUMENTS` verbatim. Empty → distill the idea under discussion and quote it the way the user framed it. Nothing concrete under discussion → say so, stop.
-2. **Dedupe.** Grep `<docs>/quests/` and `<docs>/investigations/` for the idea's key terms. Same idea exists → append `_<YYYY-MM-DD> addendum:_ <text>` under its `## Idea`, report that path, stop. Related but different → continue and put it in `related`.
-3. **Title, slug.** Title ≤8 words. Slug kebab-case. File `<docs>/quests/<slug>.md`; collision → `-2`.
-4. **Brief.** Against the repo at `repo`, read-only, absolute paths. Scope (what changes, what explicitly does not), entry points as `path:line` you have actually opened, constraints, done-when. A real brief needs research first → open the Brief with `Investigate first:` and the concrete questions. Never invent a `path:line`.
-5. **Todo instead?** No brief needed, minutes of work, or not code → append `- [ ] <idea> #<project>` to `<docs>/todo.md`, say so, stop.
-6. **Write.** Keys per Conventions: `id` (leave empty; the CLI assigns a 7-hex id on its next run), `project`, `status: ready`, `created` (today), `repo`, `session` (empty), `related` (only wikilinks whose target file exists in `<docs>`). Body:
-
-   ```markdown
-   # <title>
-   _<YYYY-MM-DD HH:mm> · <repo basename> · <branch>_
-
-   > Hub: [[Home]]
-
-   ## Idea
-   <verbatim>
-
-   ## Brief
-   <scope · entry points · constraints · done-when>
-   ```
-
-7. **Report** one line: `quest: <path> · ready · <project>` plus any dedupe note.
+1. **Content.** `$ARGUMENTS` verbatim is the Idea. Empty → take what this conversation holds for one topic: an idea (quote it the way the user framed it), a finished investigation, a decision, or all three. Nothing concrete → say so, stop.
+2. **Dedupe.** Grep `<docs>/quests/` for the key terms. Same topic exists → extend that file: `_<YYYY-MM-DD> addendum:_` under Idea, or add the missing Investigation / ADR section and move status forward; report the path, stop. Related but different → put it in `related`.
+3. **Todo instead?** No brief needed, minutes of work, or not code → append `- [ ] <idea> #<project>` to `<docs>/todo.md`, say so, stop.
+4. **Title, slug.** Title ≤8 words. Kebab slug. `<docs>/quests/<slug>.md`; collision → `-2`.
+5. **Sections**, in Conventions order, only those with content:
+   - Idea: verbatim.
+   - Brief: against the repo, read-only: scope, entry points as `path:line` you opened, constraints, done-when. A real brief needs research → open with `Investigate first:` and the concrete questions.
+   - Investigation: the question, evidence per claim (`path:line`, command, the override that beat a first guess), options, `### Bottom line`. Faithful to the conversation; tentative stays tentative.
+   - ADR: context, drivers, at least two options with pros and cons, chosen and why the losers lost, consequences. Undecided → say what would settle it.
+6. **Status.** ADR written → `adr`. Investigation without a decision → `investigating`. Brief only → `ready`.
+7. **Write.** Seven keys per Conventions: `id` empty (the CLI assigns), `session` empty, `related` only verified targets. Body: `# <title>`, `_<YYYY-MM-DD HH:mm> · <repo basename> · <branch>_`, `> Hub: [[Home]]`, sections.
+8. **Report** one line: `quest: <path> · <status> · <project>` plus any dedupe note.
 
 ## Rules
 
-- Never rewrite `## Idea`.
-- Read the repo, never edit it here.
+- Never rewrite Idea. Read the repo, never edit it here. Never invent a `path:line`.
 - Wikilinks only to files verified in `<docs>`. Code, PRs, Slack stay plain text.

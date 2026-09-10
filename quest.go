@@ -177,7 +177,7 @@ func newID(taken []quest) string {
 	}
 }
 
-var statusRank = map[string]int{"in-progress": 0, "ready": 1, "raw": 2, "done": 3, "dropped": 4}
+var statusRank = map[string]int{"in-progress": 0, "adr": 1, "investigating": 2, "ready": 3, "raw": 4, "done": 5, "dropped": 6}
 
 // sortedQuests is the one ordering every view and every numeric reference uses; done and dropped
 // sort last so the numbers shown by a default ls are the same ones -a shows.

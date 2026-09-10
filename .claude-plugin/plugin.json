@@ -1,7 +1,7 @@
 {
   "name": "quno",
-  "version": "0.1.0",
-  "description": "Quests, todo, investigations and decisions for the ~/dev/docs vault: /quno:quest, /quno:start, /quno:parse, /quno:investigation, /quno:adr. Ships with the quno CLI.",
+  "version": "0.2.0",
+  "description": "Quests for the ~/dev/docs vault: one file per thing from idea through investigation and ADR to implementation. /quno:quest, /quno:parse, /quno:start. Ships with the quno CLI.",
   "author": {
     "name": "lilBunnyRabbit",
     "url": "https://github.com/lilBunnyRabbit"
