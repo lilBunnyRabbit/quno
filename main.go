@@ -1,12 +1,101 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package main
 
-import "quno/cmd"
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+
+const usageText = `quno — quests, todo, and the agent that works them
+
+  quno q <text>              new raw quest; project from cwd, repo and branch recorded
+  quno q -                   same, text from stdin
+  quno t <text>              add a todo line, #project from cwd
+  quno t                     list todos, numbered
+  quno t done <n>            check todo n
+  quno t clear [--all]       delete checked todos; --all deletes every todo
+  quno ls [-a | -s <status>] [-l] [--porcelain]
+                             quests with ids; hides done and dropped, -l adds the slug line
+  quno start [<quest>]       cd repo, claude "/quno:start <slug>"; no quest lists ready ones
+  quno resume <quest>        cd repo, claude --resume <recorded session>
+  quno drop <quest>          set status: dropped
+  quno rm [-f] <quest>       delete the quest file; asks first unless -f
+  quno open [<quest>|todo|home]
+                             open the vault, or one note, in Obsidian
+  quno parse [args]          claude "/quno:parse args"
+  quno project               project resolved from cwd
+  quno path                  docs root
+  quno                       todo TUI: click or space toggles, n adds, d deletes, c clears done
+
+<quest> is an id or any unique prefix of it (3+ chars), a slug, or a title substring.
+Docs root: $QUNO_DOCS, else ~/dev/docs. Routing: <docs>/meta/quno.toml.`
 
 func main() {
-	cmd.Execute()
+	if err := run(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, errOut.red("quno:"), err)
+		os.Exit(1)
+	}
 }
 
-// https://github.com/manifoldco/promptui
+func run(args []string) error {
+	cfg, err := loadConfig()
+	if err != nil {
+		return err
+	}
+	if len(args) == 0 {
+		if isTerminal(os.Stdout) {
+			return runTUI(cfg)
+		}
+		printUsage()
+		return nil
+	}
+	cmd, rest := args[0], args[1:]
+	switch cmd {
+	case "q", "quest":
+		return cmdQuest(cfg, rest)
+	case "t", "todo":
+		return cmdTodo(cfg, rest)
+	case "ls", "list":
+		return cmdList(cfg, rest)
+	case "start":
+		return cmdStart(cfg, rest)
+	case "resume":
+		return cmdResume(cfg, rest)
+	case "drop":
+		return cmdDrop(cfg, rest)
+	case "rm", "remove":
+		return cmdRemove(cfg, rest)
+	case "o", "open":
+		return cmdOpen(cfg, rest)
+	case "parse":
+		return execClaude(cfg, strings.TrimSpace("/quno:parse "+strings.Join(rest, " ")))
+	case "project":
+		fmt.Println(cfg.projectFor(cwd()))
+		return nil
+	case "path":
+		fmt.Println(cfg.docs)
+		return nil
+	case "ui", "tui":
+		return runTUI(cfg)
+	case "help", "-h", "--help":
+		printUsage()
+		return nil
+	}
+	return fmt.Errorf("unknown command %q (try quno help)", cmd)
+}
+
+func printUsage() {
+	for i, line := range strings.Split(usageText, "\n") {
+		switch {
+		case i == 0:
+			fmt.Println(out.bold(line))
+		case strings.HasPrefix(line, "  quno"):
+			cmd, rest, _ := strings.Cut(strings.TrimPrefix(line, "  "), "  ")
+			fmt.Println(strings.TrimRight("  "+out.cyan(pad(cmd, 25))+"  "+strings.TrimLeft(rest, " "), " "))
+		case strings.HasPrefix(line, "Docs root"), strings.HasPrefix(line, "<quest>"):
+			fmt.Println(out.dim(line))
+		default:
+			fmt.Println(line)
+		}
+	}
+}
