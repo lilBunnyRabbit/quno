@@ -23,10 +23,11 @@ Batch triage. Classification alone moves a one-liner to a different state; the B
       - todo: no brief needed, minutes, or not code → append `- [ ] <idea> #<project>` to `<docs>/todo.md`, delete the quest file.
       - quest: write the Brief against `repo`, read-only: scope, entry points as `path:line` you opened, constraints, done-when.
       - investigate first: a real brief needs research → Brief opens with `Investigate first:` and the concrete questions.
+      - propose first: needs the team's decision, buy-in or hands before any work → Brief opens with `Propose first:` and what to ask them; start writes the Proposal.
       - drop candidate: noise → leave untouched, collect for the question at the end. Never drop silently.
    4. **Retitle, rename.** `# <title>` ≤8 words. One plain Bash call, absolute paths, no quotes, no `~`: `mv /Users/<you>/dev/docs/quests/<old>.md /Users/<you>/dev/docs/quests/<slug>.md`; deleting: `rm /Users/<you>/dev/docs/quests/<old>.md`. These exact shapes match the permission allow rules. Denied (non-interactive, no rule) → set the source to `status: dropped`, put survivors in its `related`, report it so the user deletes by hand. `id` stays with the file; a merged duplicate's id dies with it. Collision → `-2`.
    5. **Status** `ready`. `## Idea` and the capture line stay verbatim.
-3. **Report** a table: id · old name → new path · project · route (implement / investigate / todo / dup) · one-line brief. Then list drop candidates as a question.
+3. **Report** a table: id · old name → new path · project · route (implement / investigate / propose / todo / dup) · one-line brief. Then list drop candidates as a question.
 
 ## Rules
 

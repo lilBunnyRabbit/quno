@@ -16,7 +16,9 @@ const usageText = `quno — quests (idea, investigation, ADR, implementation in 
   quno t clear [--all]       delete checked todos; --all deletes every todo
   quno ls [-a | -s <status>] [-l] [--porcelain]
                              quests with ids; hides done and dropped, -l adds the slug line
-                             status: raw ready investigating adr in-progress done dropped
+                             status: raw ready investigating proposed adr in-progress done dropped
+  quno cat <quest> [section]
+                             print the file, or one ## section (quno cat <id> proposal | pbcopy)
   quno start [<quest>]       cd repo, claude "/quno:start <slug>"; no quest lists ready ones
   quno resume <quest>        cd repo, claude --resume <recorded session>
   quno drop <quest>          set status: dropped
@@ -26,7 +28,8 @@ const usageText = `quno — quests (idea, investigation, ADR, implementation in 
   quno parse [args]          claude "/quno:parse args"
   quno project               project resolved from cwd
   quno path                  docs root
-  quno                       todo TUI: click or space toggles, n adds, d deletes, c clears done
+  quno [ui [todo|quests]]    TUI; tab switches todo and quests. quests: enter starts, r resumes,
+                             o opens in Obsidian, / filters, a shows closed. No delete, no drop.
 
 <quest> is an id or any unique prefix of it (3+ chars), a slug, or a title substring.
 Docs root: $QUNO_DOCS, else ~/dev/docs. Routing: <docs>/meta/quno.toml.`
@@ -45,7 +48,7 @@ func run(args []string) error {
 	}
 	if len(args) == 0 {
 		if isTerminal(os.Stdout) {
-			return runTUI(cfg)
+			return runTUI(cfg, "")
 		}
 		printUsage()
 		return nil
@@ -68,6 +71,8 @@ func run(args []string) error {
 		return cmdRemove(cfg, rest)
 	case "o", "open":
 		return cmdOpen(cfg, rest)
+	case "cat":
+		return cmdCat(cfg, rest)
 	case "parse":
 		return execClaude(cfg, strings.TrimSpace("/quno:parse "+strings.Join(rest, " ")))
 	case "project":
@@ -77,7 +82,7 @@ func run(args []string) error {
 		fmt.Println(cfg.docs)
 		return nil
 	case "ui", "tui":
-		return runTUI(cfg)
+		return runTUI(cfg, strings.Join(rest, ""))
 	case "help", "-h", "--help":
 		printUsage()
 		return nil

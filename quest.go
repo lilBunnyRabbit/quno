@@ -177,7 +177,7 @@ func newID(taken []quest) string {
 	}
 }
 
-var statusRank = map[string]int{"in-progress": 0, "adr": 1, "investigating": 2, "ready": 3, "raw": 4, "done": 5, "dropped": 6}
+var statusRank = map[string]int{"in-progress": 0, "adr": 1, "proposed": 2, "investigating": 3, "ready": 4, "raw": 5, "done": 6, "dropped": 7}
 
 // sortedQuests is the one ordering every view and every numeric reference uses; done and dropped
 // sort last so the numbers shown by a default ls are the same ones -a shows.
@@ -342,12 +342,75 @@ func cmdResume(cfg *config, args []string) error {
 }
 
 func enterRepo(q quest) error {
+	repo, err := q.repoDir()
+	if err != nil || repo == "" {
+		return err
+	}
+	return os.Chdir(repo)
+}
+
+// repoDir is the recorded repo if it exists on disk; empty means stay where you are.
+func (q quest) repoDir() (string, error) {
 	repo := expand(q.front["repo"])
 	if repo == "" {
+		return "", nil
+	}
+	if _, err := os.Stat(repo); err != nil {
+		return "", fmt.Errorf("repo %s: %w", repo, err)
+	}
+	return repo, nil
+}
+
+// sections lists the ## headings present, in file order.
+func (q quest) sections() []string {
+	var out []string
+	for _, line := range strings.Split(q.body, "\n") {
+		if strings.HasPrefix(line, "## ") {
+			out = append(out, strings.TrimSpace(line[3:]))
+		}
+	}
+	return out
+}
+
+// section returns one ## block including its heading, up to the next ## heading.
+func (q quest) section(name string) string {
+	var b strings.Builder
+	in := false
+	for _, line := range strings.Split(q.body, "\n") {
+		if strings.HasPrefix(line, "## ") {
+			if in {
+				break
+			}
+			in = strings.EqualFold(strings.TrimSpace(line[3:]), name)
+		}
+		if in {
+			b.WriteString(line + "\n")
+		}
+	}
+	return strings.TrimRight(b.String(), "\n")
+}
+
+func cmdCat(cfg *config, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("usage: quno cat <quest> [section]")
+	}
+	q, err := findQuest(cfg, args[0])
+	if err != nil {
+		return err
+	}
+	if len(args) == 1 {
+		raw, err := os.ReadFile(q.path)
+		if err != nil {
+			return err
+		}
+		fmt.Print(string(raw))
 		return nil
 	}
-	if err := os.Chdir(repo); err != nil {
-		return fmt.Errorf("repo %s: %w", repo, err)
+	name := strings.Join(args[1:], " ")
+	text := q.section(name)
+	if text == "" {
+		return fmt.Errorf("%s has no section %q (has: %s)", q.slug, name, strings.Join(q.sections(), ", "))
 	}
+	fmt.Println(text)
 	return nil
 }

@@ -43,6 +43,7 @@ func (p palette) green(s string) string   { return p.wrap("32", s) }
 func (p palette) yellow(s string) string  { return p.wrap("33", s) }
 func (p palette) cyan(s string) string    { return p.wrap("36", s) }
 func (p palette) magenta(s string) string { return p.wrap("35", s) }
+func (p palette) blue(s string) string    { return p.wrap("34", s) }
 
 // status colors display by the meaning of value; display is usually value already padded.
 func (p palette) status(value, display string) string {
@@ -55,6 +56,8 @@ func (p palette) status(value, display string) string {
 		return p.yellow(display)
 	case "adr":
 		return p.magenta(display)
+	case "proposed":
+		return p.blue(display)
 	case "raw":
 		return p.dim(display)
 	case "done":

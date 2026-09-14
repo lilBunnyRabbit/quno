@@ -1,6 +1,6 @@
 ---
 name: quest
-description: File the thing under discussion as a quest in the quno vault at whatever stage it is — a fresh idea gets a title and a Brief (status ready); an investigation or decision already worked out in this conversation gets Investigation / ADR sections (status investigating or adr). Dedupes against existing quests. Use when the user says /quno:quest, "quest this", "archive this analysis", "record this decision", or wants something saved for later.
+description: File the thing under discussion as a quest in the quno vault at whatever stage it is — a fresh idea gets a title and a Brief (status ready); an investigation, a team proposal or a decision already worked out in this conversation gets Investigation / Proposal / ADR sections (status investigating, proposed or adr). Dedupes against existing quests. Use when the user says /quno:quest, "quest this", "archive this analysis", "record this decision", or wants something saved for later.
 argument-hint: <idea text, or empty to file what is under discussion>
 ---
 
@@ -23,10 +23,11 @@ One quest file per thing. The user pays one line; you write the rest.
 4. **Title, slug.** Title ≤8 words. Kebab slug. `<docs>/quests/<slug>.md`; collision → `-2`.
 5. **Sections**, in Conventions order, only those with content:
    - Idea: verbatim.
-   - Brief: against the repo, read-only: scope, entry points as `path:line` you opened, constraints, done-when. A real brief needs research → open with `Investigate first:` and the concrete questions.
+   - Brief: against the repo, read-only: scope, entry points as `path:line` you opened, constraints, done-when. A real brief needs research → open with `Investigate first:` and the concrete questions. Needs the team before any work → open with `Propose first:` and what you need from them.
+   - Proposal: team-facing pitch drafted in this conversation: Problem · Proposal · Why now · Alternatives · Cost and risk · Open questions · Ask. One screen, plain language.
    - Investigation: the question, evidence per claim (`path:line`, command, the override that beat a first guess), options, `### Bottom line`. Faithful to the conversation; tentative stays tentative.
    - ADR: context, drivers, at least two options with pros and cons, chosen and why the losers lost, consequences. Undecided → say what would settle it.
-6. **Status.** ADR written → `adr`. Investigation without a decision → `investigating`. Brief only → `ready`.
+6. **Status.** ADR written → `adr`. Proposal without a decision → `proposed`. Investigation without a decision → `investigating`. Brief only → `ready`.
 7. **Write.** Seven keys per Conventions: `id` empty (the CLI assigns), `session` empty, `related` only verified targets. Body: `# <title>`, `_<YYYY-MM-DD HH:mm> · <repo basename> · <branch>_`, `> Hub: [[Home]]`, sections.
 8. **Report** one line: `quest: <path> · <status> · <project>` plus any dedupe note.
 

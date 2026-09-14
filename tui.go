@@ -41,13 +41,80 @@ type todoModel struct {
 	notice string
 }
 
-func runTUI(cfg *config) error {
-	m, err := newTodoModel(cfg)
+type tabModel interface {
+	tea.Model
+	editing() bool
+}
+
+// rootModel holds both tabs and only routes: tab switches, everything else goes to the active one.
+type rootModel struct {
+	tabs   []tabModel
+	active int
+}
+
+func runTUI(cfg *config, tab string) error {
+	todo, err := newTodoModel(cfg)
 	if err != nil {
 		return err
 	}
+	quests, err := newQuestModel(cfg)
+	if err != nil {
+		return err
+	}
+	m := &rootModel{tabs: []tabModel{todo, quests}}
+	switch tab {
+	case "", "todo":
+	case "quests", "quest", "q":
+		m.active = 1
+	default:
+		return fmt.Errorf("unknown tab %q (todo or quests)", tab)
+	}
 	_, err = tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion()).Run()
 	return err
+}
+
+func (m *rootModel) Init() tea.Cmd { return nil }
+
+func (m *rootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		for _, t := range m.tabs {
+			t.Update(msg)
+		}
+		return m, nil
+	case tea.KeyMsg:
+		if msg.String() == "tab" && !m.tabs[m.active].editing() {
+			m.active = (m.active + 1) % len(m.tabs)
+			_, cmd := m.tabs[m.active].Update(reloadMsg{})
+			return m, cmd
+		}
+	}
+	_, cmd := m.tabs[m.active].Update(msg)
+	return m, cmd
+}
+
+func (m *rootModel) View() string { return m.tabs[m.active].View() }
+
+type reloadMsg struct{}
+
+var tabNames = []string{"todo", "quests"}
+
+// tabBar is the first header row of every tab: names left, a right-aligned status string.
+func tabBar(active, right string, width int) string {
+	var names []string
+	for _, n := range tabNames {
+		if n == active {
+			names = append(names, styleTitle.Render(n))
+		} else {
+			names = append(names, styleDim.Render(n))
+		}
+	}
+	left := " " + strings.Join(names, styleDim.Render("  ·  "))
+	gap := width - lipgloss.Width(left) - lipgloss.Width(right)
+	if gap < 1 {
+		gap = 1
+	}
+	return left + strings.Repeat(" ", gap) + right
 }
 
 func newTodoModel(cfg *config) (*todoModel, error) {
@@ -181,12 +248,16 @@ func (m *todoModel) fail(err error) {
 
 func (m *todoModel) Init() tea.Cmd { return nil }
 
+func (m *todoModel) editing() bool { return m.adding }
+
 func (m *todoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.input.Width = msg.Width - 6
 		m.clamp()
+	case reloadMsg:
+		m.fail(m.reload())
 	case tea.MouseMsg:
 		m.notice = ""
 		return m.handleMouse(msg)
@@ -286,14 +357,8 @@ func (m *todoModel) View() string {
 			open++
 		}
 	}
-	title := styleTitle.Render(" todo")
-	count := styleDim.Render(fmt.Sprintf("%d open · %d done ", open, done))
-	gap := m.width - lipgloss.Width(title) - lipgloss.Width(count)
-	if gap < 1 {
-		gap = 1
-	}
 	var b strings.Builder
-	b.WriteString(title + strings.Repeat(" ", gap) + count + "\n\n")
+	b.WriteString(tabBar("todo", styleDim.Render(fmt.Sprintf("%d open · %d done ", open, done)), m.width) + "\n\n")
 	rows := m.visibleRows()
 	for r := 0; r < rows; r++ {
 		i := m.top + r
@@ -310,7 +375,7 @@ func (m *todoModel) View() string {
 	}
 	footer := m.notice
 	if footer == "" {
-		footer = styleDim.Render(" j/k move · space toggle · n new · d delete · c clear done · q quit · click toggles")
+		footer = styleDim.Render(" j/k move · space toggle · n new · d delete · c clear done · tab quests · q quit")
 	}
 	b.WriteString("\n" + footer)
 	return b.String()

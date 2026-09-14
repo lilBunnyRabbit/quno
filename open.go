@@ -26,7 +26,11 @@ func cmdOpen(cfg *config, args []string) error {
 			target = q.path
 		}
 	}
-	return openURL("obsidian://open?path=" + strings.ReplaceAll(url.QueryEscape(target), "+", "%20"))
+	return openURL(obsidianURL(target))
+}
+
+func obsidianURL(path string) string {
+	return "obsidian://open?path=" + strings.ReplaceAll(url.QueryEscape(path), "+", "%20")
 }
 
 func openURL(u string) error {
