@@ -26,6 +26,7 @@ const usageText = `quno — quests (idea, investigation, ADR, implementation in 
   quno open [<quest>|todo|home]
                              open the vault, or one note, in Obsidian
   quno parse [args]          claude "/quno:parse args"
+  quno lint [args]           claude "/quno:lint args"
   quno project               project resolved from cwd
   quno path                  docs root
   quno [ui [todo|quests]]    TUI; tab switches todo and quests. quests: enter starts, r resumes,
@@ -75,6 +76,8 @@ func run(args []string) error {
 		return cmdCat(cfg, rest)
 	case "parse":
 		return execClaude(cfg, strings.TrimSpace("/quno:parse "+strings.Join(rest, " ")))
+	case "lint":
+		return execClaude(cfg, strings.TrimSpace("/quno:lint "+strings.Join(rest, " ")))
 	case "project":
 		fmt.Println(cfg.projectFor(cwd()))
 		return nil
