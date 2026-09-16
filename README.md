@@ -9,7 +9,7 @@ Quick notes, v2: a dump with an agent attached.
 ```
 mise install                                  # go 1.24 from mise.toml
 go build -o ~/.local/bin/quno .
-quno help
+quno -h
 ```
 
 Install the skills: `ln -s "$(pwd)" ~/.claude/skills/quno` — loads next session as `quno@skills-dir`.

@@ -83,11 +83,11 @@ func run(args []string) error {
 		return nil
 	case "ui", "tui":
 		return runTUI(cfg, strings.Join(rest, ""))
-	case "help", "-h", "--help":
+	case "-h", "--help":
 		printUsage()
 		return nil
 	}
-	return fmt.Errorf("unknown command %q (try quno help)", cmd)
+	return fmt.Errorf("unknown command %q (try quno -h)", cmd)
 }
 
 func printUsage() {
