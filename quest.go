@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -47,12 +48,17 @@ func cmdQuest(cfg *config, args []string) error {
 	if text == "" {
 		return fmt.Errorf("nothing to capture")
 	}
+	_, err := captureQuest(cfg, text)
+	return err
+}
+
+func captureQuest(cfg *config, text string) (quest, error) {
 	now := time.Now()
 	dir := cwd()
 	g := gitInfoFor(dir)
 	qdir := filepath.Join(cfg.docs, "quests")
 	if err := os.MkdirAll(qdir, 0o755); err != nil {
-		return err
+		return quest{}, err
 	}
 	path := uniquePath(qdir, now.Format("2006-01-02")+"-"+slugify(text, 5))
 	capture := "_" + now.Format("2006-01-02 15:04")
@@ -66,7 +72,7 @@ func cmdQuest(cfg *config, args []string) error {
 	heading, _, _ := strings.Cut(text, "\n")
 	existing, err := loadQuests(cfg)
 	if err != nil {
-		return err
+		return quest{}, err
 	}
 	id := newID(existing)
 	content := fmt.Sprintf(`---
@@ -88,14 +94,14 @@ related: []
 %s
 `, id, cfg.projectFor(dir), now.Format("2006-01-02"), contract(g.top), heading, capture, text)
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
-		return err
+		return quest{}, err
 	}
 	if out.enabled {
 		fmt.Println(out.green("✓"), out.yellow(id), contract(path))
 	} else {
 		fmt.Println(contract(path))
 	}
-	return nil
+	return findQuest(cfg, id)
 }
 
 func slugify(text string, maxWords int) string {
@@ -296,10 +302,14 @@ func findQuest(cfg *config, needle string) (quest, error) {
 	case 1:
 		return matches[0], nil
 	case 0:
-		return quest{}, fmt.Errorf("no quest matches %q", needle)
+		return quest{}, noMatch(needle)
 	}
 	return quest{}, ambiguous(needle, matches)
 }
+
+type noMatch string
+
+func (n noMatch) Error() string { return fmt.Sprintf("no quest matches %q", string(n)) }
 
 func ambiguous(needle string, qs []quest) error {
 	lines := make([]string, 0, len(qs))
@@ -313,7 +323,7 @@ func cmdStart(cfg *config, args []string) error {
 	if len(args) == 0 {
 		return execClaude(cfg, "/quno:start")
 	}
-	q, err := findQuest(cfg, args[0])
+	q, err := startTarget(cfg, args)
 	if err != nil {
 		return err
 	}
@@ -321,6 +331,17 @@ func cmdStart(cfg *config, args []string) error {
 		return err
 	}
 	return execClaude(cfg, "/quno:start "+q.slug)
+}
+
+// Several words that match nothing are a new idea; one word is more likely a mistyped id.
+func startTarget(cfg *config, args []string) (quest, error) {
+	needle := strings.TrimSpace(strings.Join(args, " "))
+	q, err := findQuest(cfg, needle)
+	var missing noMatch
+	if errors.As(err, &missing) && len(args) > 1 {
+		return captureQuest(cfg, needle)
+	}
+	return q, err
 }
 
 func cmdResume(cfg *config, args []string) error {

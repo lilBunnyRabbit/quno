@@ -1,6 +1,6 @@
 {
   "name": "quno",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Quests for the ~/dev/docs vault: one file per thing from idea through investigation and ADR to implementation. /quno:quest, /quno:parse, /quno:start, /quno:lint. Ships with the quno CLI.",
   "author": {
     "name": "lilBunnyRabbit",

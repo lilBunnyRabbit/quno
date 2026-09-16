@@ -1,7 +1,7 @@
 ---
 name: start
-description: Pick up a quest from the quno vault in this session — read it, ask the user whatever is still unclear until the idea is solid, ask the route (implement, investigate, propose to the team after exploring and extending the idea with the user, record an ADR, brief only, drop), record this session id, do the work inside the same quest file, write findings. Works at any phase: raw, ready, investigating, proposed, adr, in-progress. Use when the user says /quno:start <id or slug>, "start quest X", "pick up X", "continue the investigation on X", or when spawned by `quno start`. No argument lists the quests that are ready.
-argument-hint: <quest id, slug or title fragment>
+description: Pick up a quest from the quno vault in this session — read it, ask the user whatever is still unclear until the idea is solid, ask the route (implement, investigate, propose to the team after exploring and extending the idea with the user, record an ADR, brief only, drop), record this session id, do the work inside the same quest file, write findings. Works at any phase: raw, ready, investigating, proposed, adr, in-progress. Use when the user says /quno:start <id or slug>, "start quest X", "pick up X", "continue the investigation on X", or when spawned by `quno start`. No argument lists the quests that are ready. Free text that matches no quest is filed as a new quest and worked in the same run, so a proposal or an investigation can start from a bare idea.
+argument-hint: <quest id, slug or title fragment, or a new idea in several words>
 ---
 
 # quno:start
@@ -15,7 +15,7 @@ Adopt a quest in this session. The quest file is the ticket and the record: inve
 
 ## Steps
 
-1. **Find.** `$ARGUMENTS` empty → list quests not `done` or `dropped` (id, status, title, project), stop. Else match `id:` exactly or by unique prefix, then `<docs>/quests/<slug>.md` exactly, then by filename or `# title` substring. Several → list them, stop. None → say so, stop.
+1. **Find.** `$ARGUMENTS` empty → list quests not `done` or `dropped` (id, status, title, project), stop. Else match `id:` exactly or by unique prefix, then `<docs>/quests/<slug>.md` exactly, then by filename or `# title` substring. Several → list them, stop. None and one word → say so, stop. None and several words → a new idea: run `quno q "<arguments verbatim>"` (project, repo and branch from cwd), say `filed as new: <id> <path>` in one line, continue with step 2 on that file.
 2. **Raw?** `status: raw` → apply the `/quno:parse` steps to this one quest first (brief, retitle, rename), continue with the new path.
 3. **cwd.** `repo` set and cwd not inside it → stop; tell the user to `cd <repo>` and rerun, or use `quno start <id>`. Project context is cwd-based; never work from the wrong directory.
 4. **Understand.** Read every section present and open the Brief's entry points in the repo. Restate the quest in three lines: what changes, where, done-when; for `investigating` or `adr` quests, the bottom line so far and what is still open. Everything the repo did not answer goes into one AskUserQuestion, batched, concrete options plus free text: which surface or flow, scope edges, behaviour on the edge cases you found, done-when, contradictions between sections. Do not ask what the repo or the Brief answers. Repeat once if answers open new gaps. Write the outcome under `## Brief` as a `**Clarified <YYYY-MM-DD>:**` block; fix scope or entry points if they were wrong. Never touch `## Idea`. If the restatement needed no questions, say so and move on.

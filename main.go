@@ -19,7 +19,9 @@ const usageText = `quno — quests (idea, investigation, ADR, implementation in 
                              status: raw ready investigating proposed adr in-progress done dropped
   quno cat <quest> [section]
                              print the file, or one ## section (quno cat <id> proposal | pbcopy)
-  quno start [<quest>]       cd repo, claude "/quno:start <slug>"; no quest lists ready ones
+  quno start [<quest>|<idea>]
+                             cd repo, claude "/quno:start <slug>"; several words that match nothing
+                             are captured as a new quest first; no quest lists ready ones
   quno resume <quest>        cd repo, claude --resume <recorded session>
   quno drop <quest>          set status: dropped
   quno rm [-f] <quest>       delete the quest file; asks first unless -f
