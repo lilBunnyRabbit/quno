@@ -3,12 +3,21 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
 type config struct {
-	docs     string
-	projects map[string]string
+	docs      string
+	projects  map[string]string
+	history   string
+	snapshots string
+	recipient string
+	keep      int
+}
+
+func (c *config) tomlPath() string {
+	return filepath.Join(c.docs, "meta", "quno.toml")
 }
 
 func loadConfig() (*config, error) {
@@ -18,7 +27,7 @@ func loadConfig() (*config, error) {
 		docs = filepath.Join(home(), "dev", "docs")
 	}
 	cfg := &config{docs: expand(docs), projects: map[string]string{}}
-	raw, err := os.ReadFile(filepath.Join(cfg.docs, "meta", "quno.toml"))
+	raw, err := os.ReadFile(cfg.tomlPath())
 	if err != nil {
 		if os.IsNotExist(err) {
 			return cfg, nil
@@ -51,6 +60,17 @@ func loadConfig() (*config, error) {
 			}
 		case "projects":
 			cfg.projects[key] = value
+		case "vault":
+			switch key {
+			case "history":
+				cfg.history = value
+			case "snapshots":
+				cfg.snapshots = value
+			case "recipient":
+				cfg.recipient = value
+			case "keep":
+				cfg.keep, _ = strconv.Atoi(value)
+			}
 		}
 	}
 	return cfg, nil

@@ -29,6 +29,14 @@ const usageText = `quno — quests (idea, investigation, ADR, implementation in 
                              open the vault, or one note, in Obsidian
   quno parse [args]          claude "/quno:parse args"
   quno lint [args]           claude "/quno:lint args"
+  quno sync [-m <title>]     commit the vault into a git dir kept outside it; the vault never holds a .git
+  quno git <args>            git against that history (quno git log --oneline, quno git diff HEAD~1,
+                             quno git checkout <sha> -- quests/x.md)
+  quno snapshot              sync, bundle the whole history, encrypt it to the [vault] recipient, prune old ones
+  quno snapshot keygen       make the key pair: public key into quno.toml, secret printed once
+  quno snapshot ls           list snapshot files
+  quno snapshot restore <file> <dir> [-i <identity file>]
+                             decrypt and clone; secret from -i, $QUNO_AGE_KEY or a prompt
   quno project               project resolved from cwd
   quno path                  docs root
   quno [ui [todo|quests]]    TUI; tab switches todo and quests. quests: enter starts, r resumes,
@@ -80,6 +88,12 @@ func run(args []string) error {
 		return execClaude(cfg, strings.TrimSpace("/quno:parse "+strings.Join(rest, " ")))
 	case "lint":
 		return execClaude(cfg, strings.TrimSpace("/quno:lint "+strings.Join(rest, " ")))
+	case "sync":
+		return cmdSync(cfg, rest)
+	case "git":
+		return cmdGit(cfg, rest)
+	case "snapshot":
+		return cmdSnapshot(cfg, rest)
 	case "project":
 		fmt.Println(cfg.projectFor(cwd()))
 		return nil
