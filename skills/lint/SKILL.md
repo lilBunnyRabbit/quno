@@ -16,13 +16,13 @@ argument-hint: [knowledge | quests | --report]
 
 ## Steps
 
-1. **Read all of it.** Every `.md` under `<docs>/knowledge/` in one batch; for quests only frontmatter plus the first line under each heading.
+1. **Read all of it.** Every `.md` under `<docs>/knowledge/` in one batch, plus `ls -l <docs>/knowledge/snippets/bin`; for quests only frontmatter plus the first line under each heading.
 2. **Knowledge checks**, in this order:
-   1. **Links.** Every `[[target]]` resolves to a file in `<docs>`; a bare `[[INDEX]]` inside a stack file means the sibling INDEX. Every root domain pointer path exists. Every stack file is named in its domain INDEX and in the root pointer. Every note file has at least one inbound link.
+   1. **Links.** Every `[[target]]` resolves to a file in `<docs>`; a bare `[[INDEX]]` inside a stack file means the sibling INDEX. Every root domain pointer path exists. Every stack file is named in its domain INDEX and in the root pointer. Every note file has at least one inbound link. Every script in `snippets/bin/` is executable, passes `bash -n`, and is named in `snippets/INDEX.md`; every `bin/<name>` that index mentions exists.
    2. **Duplicates.** Same lesson in two places (hot fact restating a stack-file line, INDEX line restating a note) → the more specific place keeps the text, the other keeps one clause plus `[[link]]`.
    3. **Contradictions.** Two lines, same trigger, opposite conclusion → question, both quoted verbatim, never resolved by guessing.
    4. **Stale.** Lines carrying a date, a version pin, an "upstream bug", or a "snapshot of" note → list with the claim to re-verify. Verify only when one command or one changelog read settles it; otherwise leave the line and list it.
-   5. **Shape.** Index line past ~60 words or holding repro steps → note file plus a one-line pointer. Hot facts past ~10 → name the coldest to demote. Stack-neutral line in a stack file → domain INDEX; API-bound line in an INDEX → stack file.
+   5. **Shape.** Index line past ~60 words or holding repro steps → note file plus a one-line pointer. Hot facts past ~10 → name the coldest to demote. Stack-neutral line in a stack file → domain INDEX; API-bound line in an INDEX → stack file. `snippets/INDEX.md` is exempt from the word cap: a line there is trigger + invocation + gotcha, and code lives in `snippets/` by design.
 3. **Quest checks.** `related:` targets resolve. `status: in-progress` untouched (mtime) for 14+ days → list. `status: raw` present → say how many, point at `/quno:parse`. Every quest carries `> Hub: [[Home]]`.
 4. **Apply** mechanical fixes unless `--report`: dead link repaired or removed, missing pointer or header line added, duplicate collapsed to a link, overlong line moved to a note. Everything under Contradictions and Stale stays a question.
 5. **Brief**, one screen: changed · flagged (questions) · re-verify list · demote candidates. Table for flagged lines: file · line · check · action asked.
