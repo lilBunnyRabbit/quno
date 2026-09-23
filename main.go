@@ -29,6 +29,9 @@ const usageText = `quno — quests (idea, investigation, ADR, implementation in 
                              open the vault, or one note, in Obsidian
   quno parse [args]          claude "/quno:parse args"
   quno lint [args]           claude "/quno:lint args"
+  quno eval [--case <id>]... [--model opus] [--max-turns 12] [--budget 1] [--no-save] [--list]
+                             retrieval eval: claude -p per case in meta/eval/retrieval.jsonl from a scratch
+                             cwd, scores file read and conclusion, run saved to meta/eval/runs/<stamp>.md
   quno sync [-m <title>]     commit the vault into a git dir kept outside it; the vault never holds a .git
   quno git <args>            git against that history (quno git log --oneline, quno git diff HEAD~1,
                              quno git checkout <sha> -- quests/x.md)
@@ -88,6 +91,8 @@ func run(args []string) error {
 		return execClaude(cfg, strings.TrimSpace("/quno:parse "+strings.Join(rest, " ")))
 	case "lint":
 		return execClaude(cfg, strings.TrimSpace("/quno:lint "+strings.Join(rest, " ")))
+	case "eval":
+		return cmdEval(cfg, rest)
 	case "sync":
 		return cmdSync(cfg, rest)
 	case "git":
